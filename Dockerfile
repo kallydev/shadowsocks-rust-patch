@@ -30,7 +30,7 @@ FROM alpine:3.14 AS sslocal
 
 COPY --from=sslocal-builder /root/shadowsocks-rust/target/release/sslocal /usr/bin/
 
-COPY --from=ssserver-builder /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
+COPY --from=sslocal-builder /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
 
 ENTRYPOINT [ "sslocal", "--log-without-time", "-c", "/etc/shadowsocks-rust/config.json" ]
 
