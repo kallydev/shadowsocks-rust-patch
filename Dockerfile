@@ -36,7 +36,7 @@ ENTRYPOINT [ "sslocal", "--log-without-time", "-c", "/etc/shadowsocks-rust/confi
 
 FROM alpine:3.14 AS ssserver
 
-COPY --from=ssserver-builder /root/shadowsocks-rust/target/release /usr/bin
+COPY --from=ssserver-builder /root/shadowsocks-rust/target/release/ssserver /usr/bin
 
 COPY --from=ssserver-builder /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
 
