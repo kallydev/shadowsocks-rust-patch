@@ -1,43 +1,29 @@
-FROM alpine:3.14 AS sslocal-builder
+FROM --platform=$BUILDPLATFORM rust:1.53.0-buster AS build
 
-ENV PATH=/root/.cargo/bin:$PATH
+ARG TARGETARCH
 
-RUN apk add build-base curl
-
-RUN curl https://sh.rustup.rs -o rustup-init.sh && sh rustup-init.sh -y --default-toolchain nightly
+RUN apt-get update && apt-get install -y build-essential curl musl-tools
 
 WORKDIR /root/shadowsocks-rust
 
 ADD . .
 
-RUN cargo build --release --bin sslocal
+RUN rustup install "$(cat rust-toolchain)"
 
-FROM alpine:3.14 AS ssserver-builder
-
-ENV PATH=/root/.cargo/bin:$PATH
-
-RUN apk add build-base curl
-
-RUN curl https://sh.rustup.rs -o rustup-init.sh && sh rustup-init.sh -y --default-toolchain nightly
-
-WORKDIR /root/shadowsocks-rust
-
-ADD . .
-
-RUN cargo build --release --bin ssserver
+RUN chmod +x build/build-docker && build/build-docker
 
 FROM alpine:3.14 AS sslocal
 
-COPY --from=sslocal-builder /root/shadowsocks-rust/target/release/sslocal /usr/bin/
+COPY --from=build /root/shadowsocks-rust/target/release/sslocal /usr/bin
 
-COPY --from=sslocal-builder /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
+COPY --from=build /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
 
 ENTRYPOINT [ "sslocal", "--log-without-time", "-c", "/etc/shadowsocks-rust/config.json" ]
 
 FROM alpine:3.14 AS ssserver
 
-COPY --from=ssserver-builder /root/shadowsocks-rust/target/release/ssserver /usr/bin
+COPY --from=build /root/shadowsocks-rust/target/release/ssserver /usr/bin
 
-COPY --from=ssserver-builder /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
+COPY --from=build /root/shadowsocks-rust/examples/config_docker.json /etc/shadowsocks-rust/config.json
 
 ENTRYPOINT [ "ssserver", "--log-without-time", "-c", "/etc/shadowsocks-rust/config.json" ]
