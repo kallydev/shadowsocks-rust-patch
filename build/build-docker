@@ -1,6 +1,10 @@
 #!/bin/sh
 
 case "$TARGETARCH" in
+"386")
+  RUST_TARGET="i686-unknown-linux-musl"
+  MUSL="i686-linux-musl"
+  ;;
 "amd64")
   echo "amd64"
   RUST_TARGET="x86_64-unknown-linux-musl"
